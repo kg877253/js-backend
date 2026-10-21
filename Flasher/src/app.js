@@ -20,6 +20,7 @@ import userRouter from './routes/user.routes.js';
 
 // Routes declaration
 app.use('/api/v1/users', userRouter);
+//http://localhost:3000/api/v1/users/register ---> is the endpoint for this route
 
 
 export default app;
