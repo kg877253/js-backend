@@ -1,8 +1,8 @@
 import { asyncHandler } from '../utils/asyncHandler.js';
 import { ApiError } from "../utils/ApiError.js"
-import { User } from "../models/User.model.js"
+import { User } from "../models/user.model.js"
 import { uploadToCloudinary } from "../utils/cloudinary.js"
-import {ApiResponse} from "../utils/ApiResponse.js"
+import { ApiResponse } from "../utils/ApiResponse.js"
 
 const registerUser = asyncHandler(async (req, res) => {
 
@@ -21,8 +21,8 @@ const registerUser = asyncHandler(async (req, res) => {
 
     //Step2
     //some ka use krke check kr rhe ki koi bhi field empty to nhi hai normal if else se bhi hoskta hai but ye short way hai
-    if ([password, username, email, fullname].some((field) => field?.trim() === "")) {
-        throw new ApiError(400, "All fields are required")
+    if ([fullname, username, email, password].some((field) => !field?.trim())) {
+        throw new ApiError(400, "All fields are required");
     }
     if (!email.includes("@") || !email.includes(".com")) {
         throw new ApiError(400, "Email is not valid")
