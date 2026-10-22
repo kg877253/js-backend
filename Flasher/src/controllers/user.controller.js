@@ -37,7 +37,13 @@ const registerUser = asyncHandler(async (req, res) => {
     //Step4
     //Optimal way to check for files and get their path jo humare public folder me save ho rhe hai(before cloudinary upload)
     const avatarLocalPath = req.files?.avatar?.[0]?.path;
-    const coverImageLocalPath = req.files?.coverImage?.[0]?.path;
+    // const coverImageLocalPath = req.files?.coverImage?.[0]?.path;
+    let coverImageLocalPath;
+
+    if (req.files && Array.isArray(req.files.coverImage) && req.files.coverImage.length > 0) {
+        coverImageLocalPath = req.files.coverImage[0].path;
+    }
+
     if (!avatarLocalPath) {
         throw new ApiError(400, "Avatar is required")
     }
@@ -45,7 +51,9 @@ const registerUser = asyncHandler(async (req, res) => {
     //Step5
     //upload to cloudinary
     const avatar = await uploadToCloudinary(avatarLocalPath);
-    const coverImage = await uploadToCloudinary(coverImageLocalPath);
+    const coverImage = coverImageLocalPath
+        ? await uploadToCloudinary(coverImageLocalPath)
+        : null;
     if (!avatar) {
         throw new ApiError(400, "Avatar is required ")
     }
