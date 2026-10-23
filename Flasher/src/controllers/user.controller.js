@@ -160,7 +160,6 @@ const logoutUser = asyncHandler(async (req, res) => {
     //3. Clear cookies from frontend
     //4. Send response to frontend
 
-
     await User.findByIdAndUpdate(req.user._id, {
         $set: { refreshToken: undefined }
     },
