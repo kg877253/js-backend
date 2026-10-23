@@ -6,7 +6,7 @@ import { ApiResponse } from "../utils/ApiResponse.js"
 
 
 const generateAccessandRefreshToken = async (userId) => {
-    
+
     try {
         const user = User.findById(userId);
         const accessToken = await user.generateAccessToken();
