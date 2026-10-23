@@ -109,7 +109,7 @@ const loginUser = asyncHandler(async (req, res) => {
 
     //Step1
     const { email, username, password } = req.body;
-    if (!email || !username) {
+    if (!(email || username)) {
         throw new ApiError(400, "Email or username is required")
     }
 
@@ -153,7 +153,30 @@ const loginUser = asyncHandler(async (req, res) => {
 })
 
 const logoutUser = asyncHandler(async (req, res) => {
-    
+
+    // req.user is set in verifyJWT middleware, so we can access the logged-in user from req.user
+    //1. Get user from req.user
+    //2. Remove refresh token from db
+    //3. Clear cookies from frontend
+    //4. Send response to frontend
+
+
+    await User.findByIdAndUpdate(req.user._id, {
+        $set: { refreshToken: undefined }
+    },
+        { new: true }
+    )
+
+    const options = {
+        httpOnly: true,
+        secure: true,
+    }
+
+    return res
+        .status(200)
+        .clearCookie("accessToken", options)
+        .clearCookie("refreshToken", options)
+        .json(new ApiResponse(200, {}, "User logged out successfully"))
 })
 
-export { registerUser , loginUser , logoutUser}
+export { registerUser, loginUser, logoutUser }
