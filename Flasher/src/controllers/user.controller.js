@@ -8,7 +8,7 @@ import { ApiResponse } from "../utils/ApiResponse.js"
 const generateAccessandRefreshToken = async (userId) => {
 
     try {
-        const user = User.findById(userId);
+        const user = await User.findById(userId);
         const accessToken = await user.generateAccessToken();
         const refreshToken = await user.generateRefreshToken();
 
@@ -161,11 +161,11 @@ const logoutUser = asyncHandler(async (req, res) => {
     //3. Clear cookies from frontend
     //4. Send response to frontend
 
-    await User.findByIdAndUpdate(req.user._id, {
-        $set: { refreshToken: undefined }
-    },
+    await User.findByIdAndUpdate(
+        req.user._id,
+        { $unset: { refreshToken: 1 } },
         { new: true }
-    )
+    );
 
     const options = {
         httpOnly: true,
