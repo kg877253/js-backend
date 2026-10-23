@@ -17,7 +17,7 @@ export const verifyJWT =  asyncHandler(async (req, res, next) => {
         if (!user) {
             return res.status(401).json({ message: "Access denied. User not found." });
         }
-    
+        // Attach the user object to the request for further use in the route handlers
         req.user = user;
     } catch (error) {
         throw new ApiError(401, error?.message || "Invalid token");
