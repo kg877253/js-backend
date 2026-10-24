@@ -4,6 +4,7 @@ import { User } from "../models/user.model.js"
 import { uploadToCloudinary } from "../utils/cloudinary.js"
 import { ApiResponse } from "../utils/ApiResponse.js"
 import jwt from 'jsonwebtoken';
+import { getPublicIdFromUrl } from '../utils/getpublicId.js';
 
 const generateAccessandRefreshToken = async (userId) => {
 
@@ -274,25 +275,43 @@ const updateaccountdetails = asyncHandler(async (req, res) => {
 
 const updateuseravatar = asyncHandler(async (req, res) => {
     const avatarlocalPath = req.file?.path;
-
     if (!avatarlocalPath) {
         throw new ApiError(400, "Avatar file is required");
     }
 
-    const avatar = await uploadToCloudinary(avatarlocalPath)
-    if (!avatar.url) {
-        throw new ApiError(500, "Error uploading avatar to cloudinary");
+    const user = await User.findById(req.user?._id);
+    if (!user) {
+        throw new ApiError(404, "User not found");
     }
 
-    const user = await User.findByIdAndUpdate(req.user?._id,
-        { $set: { avatar: avatar.url } },
-        { returnDocument: 'after' }
-    ).select("-password -refreshToken");
+    const oldAvatarUrl = user.avatar;
+    const avatar = await uploadToCloudinary(avatarlocalPath);
+    if (!avatar?.url) {
+        throw new ApiError(500, "Error uploading avatar to Cloudinary");
+    }
 
-    return res
-        .status(200)
-        .json(new ApiResponse(200, user, "Avatar updated successfully"));
-})
+    user.avatar = avatar.url;
+    await user.save();
+
+    if (oldAvatarUrl) {
+        const oldPublicId = getPublicIdFromUrl(oldAvatarUrl);
+        if (oldPublicId) {
+            try {
+                await cloudinary.uploader.destroy(oldPublicId);
+            } catch (error) {
+                console.error("Old avatar deletion failed:", error);
+            }
+        }
+    }
+
+    const updatedUser = await User.findById(user._id)
+        .select("-password -refreshToken");
+
+    return res.status(200).json(
+        new ApiResponse(200, updatedUser, "Avatar updated successfully")
+    );
+});
+
 
 const updateusercoverimage = asyncHandler(async (req, res) => {
     const coverImageLocalPath = req.file?.path;
