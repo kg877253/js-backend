@@ -180,6 +180,12 @@ const logoutUser = asyncHandler(async (req, res) => {
 })
 
 const refreshAccessToken = asyncHandler(async (req, res) => {
+    //1. Get refresh token from cookies or request body
+    //2. Verify the refresh token using jwt.verify()
+    //3. If valid, generate new access and refresh tokens
+    //4. Update the user's refresh token in the database
+    //5. Send the new tokens in cookies and response
+    
     const incomingrefreshToken = req.cookies.refreshToken || req.body.refreshToken;
     if (!incomingrefreshToken) {
         throw new ApiError(401, "unauthorized request")
