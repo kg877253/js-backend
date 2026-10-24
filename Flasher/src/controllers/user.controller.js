@@ -316,4 +316,6 @@ const updateusercoverimage = asyncHandler(async (req, res) => {
         .json(new ApiResponse(200, user, "Cover image updated successfully"));
 })
 
+
+
 export { registerUser, loginUser, logoutUser, refreshAccessToken, changeCurrentPassword, getcurrentuser, updateaccountdetails, updateuseravatar, updateusercoverimage }
