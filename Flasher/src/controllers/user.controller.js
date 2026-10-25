@@ -23,6 +23,7 @@ const generateAccessandRefreshToken = async (userId) => {
     }
 }
 
+
 const registerUser = asyncHandler(async (req, res) => {
 
     // 1. Get details from frontend wtever we are taking ..
@@ -99,6 +100,7 @@ const registerUser = asyncHandler(async (req, res) => {
     return res.status(201).json(new ApiResponse(200, createdUser, "User created successfully in db yahhu"))
 });
 
+
 const loginUser = asyncHandler(async (req, res) => {
 
     //1. Get details from frontend (req body se ->data)
@@ -154,6 +156,7 @@ const loginUser = asyncHandler(async (req, res) => {
 
 })
 
+
 const logoutUser = asyncHandler(async (req, res) => {
 
     // req.user is set in verifyJWT middleware, so we can access the logged-in user from req.user
@@ -179,6 +182,7 @@ const logoutUser = asyncHandler(async (req, res) => {
         .clearCookie("refreshToken", options)
         .json(new ApiResponse(200, {}, "User logged out successfully"))
 })
+
 
 const refreshAccessToken = asyncHandler(async (req, res) => {
     //1. Get refresh token from cookies or request body
@@ -248,12 +252,14 @@ const changeCurrentPassword = asyncHandler(async (req, res) => {
     return res.status(200).json(new ApiResponse(200, {}, "Password changed successfully"));
 })
 
+
 const getcurrentuser = asyncHandler(async (req, res) => {
     const user = await User.findById(req.user?._id).select("-password -refreshToken");
     return res
         .status(200)
         .json(new ApiResponse(200, user, "Current user details fetched successfully"));
 })
+
 
 const updateaccountdetails = asyncHandler(async (req, res) => {
     const { fullname, email } = req.body;
@@ -337,4 +343,73 @@ const updateusercoverimage = asyncHandler(async (req, res) => {
 
 
 
-export { registerUser, loginUser, logoutUser, refreshAccessToken, changeCurrentPassword, getcurrentuser, updateaccountdetails, updateuseravatar, updateusercoverimage }
+const getUserChannelProfile = asyncHandler(async (req, res) => {
+
+    const {username} = req.params;
+    if(!username?.trim()){
+        throw new ApiError(400, "Username is required")
+    }
+
+    const channel = await User.aggregate([
+        {
+            $match: {
+                username: username?.toLowerCase()
+            }                             
+        },
+        {
+            $lookup :{
+                from: "subscriptions", //in model its name is Subscription but in db it will be subscriptions
+                localField: "_id",
+                foreignField: "channel",
+                as: "subscribers"
+            }
+        },
+        {
+            $lookup: {
+                from: "subscriptions",
+                localField: "_id",
+                foreignField: "subscriber",
+                as: "subscribedtochannels"
+            }
+        },
+        {
+            $addFields: {
+                // ye jo humne 1st lookup me subscribers ka array banaya uska size count krke subscribersCount me dal diya
+                subscribersCount: { $size: "$subscribers" },
+                //ye jo humne 2nd lookup me subscribedtochannels ka array banaya uska size count krke subscribedToChannelsCount me dal diya
+                subscribedToChannelsCount: { $size: "$subscribedtochannels" },
+                isSubscribed: {
+                    $cond: {
+                        if: {
+                            $in: [req.user?._id, "$subscribers.subscriber"]                         
+                        },
+                        then: true,
+                        else: false 
+                    }
+                }
+            }
+        },
+        {
+            $project: {
+                fullname: 1,
+                username: 1,
+                avatar: 1,
+                coverImage: 1,
+                subscribersCount: 1,
+                subscribedToChannelsCount: 1,
+                isSubscribed: 1,
+                email: 1,
+            }
+        }
+    ])
+
+    if(!channel?.length){
+        throw new ApiError(404, "Channel not found")
+    }
+
+    return res
+        .status(200)
+        .json(new ApiResponse(200, channel[0], "Channel profile fetched successfully"))
+})
+
+export { registerUser, loginUser, logoutUser, refreshAccessToken, changeCurrentPassword, getcurrentuser, updateaccountdetails, updateuseravatar, updateusercoverimage, getUserChannelProfile }
