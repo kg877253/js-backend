@@ -5,6 +5,7 @@ import { uploadToCloudinary } from "../utils/cloudinary.js"
 import { ApiResponse } from "../utils/ApiResponse.js"
 import jwt from 'jsonwebtoken';
 import { getPublicIdFromUrl } from '../utils/getpublicId.js';
+import mongoose from 'mongoose';
 
 const generateAccessandRefreshToken = async (userId) => {
 
@@ -23,7 +24,7 @@ const generateAccessandRefreshToken = async (userId) => {
     }
 }
 
-
+//Tested(-avatar -coverImage) and working fine
 const registerUser = asyncHandler(async (req, res) => {
 
     // 1. Get details from frontend wtever we are taking ..
@@ -167,7 +168,7 @@ const logoutUser = asyncHandler(async (req, res) => {
 
     await User.findByIdAndUpdate(
         req.user._id,
-        { $unset: { refreshToken: 1 } },
+        { $unset: { refreshToken: 1 } }, //this removes the field from the document
         { returnDocument: 'after' }
     );
 
@@ -197,10 +198,10 @@ const refreshAccessToken = asyncHandler(async (req, res) => {
     }
 
     try {
-        const decodedToken = jwt.verify(incomingrefreshToken, process.env.JWT_REFRESH_SECRET)
-        const user = await User.findById(decodedToken.userId)
+        const decodedToken = jwt.verify(incomingrefreshToken, process.env.REFRESH_TOKEN_SECRET)
+        const user = await User.findById(decodedToken._id)
         if (!user) {
-            throw new ApiError(401, "Invalid refresh token")
+            throw new ApiError(401, "Invalid user for refresh token")
         }
 
         if (user.refreshToken !== incomingrefreshToken) {
@@ -228,13 +229,16 @@ const refreshAccessToken = asyncHandler(async (req, res) => {
 
 
     } catch (error) {
-        throw new ApiError(500, "Error while refreshing access token")
+        console.error("Error test to kbnow", error);
+        throw new ApiError(500, "Error while refreshing access token that")
+        
     }
 
 })
 
 
 const changeCurrentPassword = asyncHandler(async (req, res) => {
+
     const { oldPassword, newPassword } = req.body;
     const user = await User.findById(req.user?._id);
     if (!user) {

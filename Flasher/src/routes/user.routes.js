@@ -28,17 +28,19 @@ router.post('/register', upload.fields([     //middleware for uploading files
         name: "coverImage",
         maxCount: 1
     }
-]), registerUser)
-router.post('/login', loginUser);
+]), registerUser) //T-Done
+router.post('/login', loginUser);//T-Done
 
 //secured routes
-router.post('/logout', verifyJWT, logoutUser);
-router.post('/refresh-token', refreshAccessToken);
-router.post('/change-password', verifyJWT, changeCurrentPassword);
-router.get('/current-user', verifyJWT, getcurrentuser);
-router.get('/channel/:username', verifyJWT, getUserChannelProfile);
-router.get('/watch-history', verifyJWT, getWatchHistory);
-router.patch('/update-account-details', verifyJWT, updateaccountdetails);
+router.post('/logout', verifyJWT, logoutUser); //T-Done
+router.post('/refresh-token', refreshAccessToken); //T-Done
+router.post('/change-password', verifyJWT, changeCurrentPassword); //T-Done
+
+router.get('/current-user', verifyJWT, getcurrentuser);//T-Done
+router.get('/channel/:username', verifyJWT, getUserChannelProfile); //T-Done (username-kartik)
+router.get('/watch-history', verifyJWT, getWatchHistory); //T-Done 
+
+router.patch('/update-account-details', verifyJWT, updateaccountdetails); //T-Done
 router.patch('/update-avatar', verifyJWT, upload.single('avatar'), updateuseravatar);
 router.patch('/update-cover-image', verifyJWT, upload.single('coverImage'), updateusercoverimage);
 
