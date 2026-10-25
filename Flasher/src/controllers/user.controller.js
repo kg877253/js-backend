@@ -344,8 +344,8 @@ const updateusercoverimage = asyncHandler(async (req, res) => {
 
 const getUserChannelProfile = asyncHandler(async (req, res) => {
 
-    const {username} = req.params;
-    if(!username?.trim()){
+    const { username } = req.params;
+    if (!username?.trim()) {
         throw new ApiError(400, "Username is required")
     }
 
@@ -353,10 +353,10 @@ const getUserChannelProfile = asyncHandler(async (req, res) => {
         {
             $match: {
                 username: username?.toLowerCase()
-            }                             
+            }
         },
         {
-            $lookup :{
+            $lookup: {
                 from: "subscriptions", //in model its name is Subscription but in db it will be subscriptions
                 localField: "_id",
                 foreignField: "channel",
@@ -380,10 +380,10 @@ const getUserChannelProfile = asyncHandler(async (req, res) => {
                 isSubscribed: {
                     $cond: {
                         if: {
-                            $in: [req.user?._id, "$subscribers.subscriber"]                         
+                            $in: [req.user?._id, "$subscribers.subscriber"]
                         },
                         then: true,
-                        else: false 
+                        else: false
                     }
                 }
             }
@@ -402,7 +402,7 @@ const getUserChannelProfile = asyncHandler(async (req, res) => {
         }
     ])
 
-    if(!channel?.length){
+    if (!channel?.length) {
         throw new ApiError(404, "Channel not found")
     }
 
@@ -457,7 +457,7 @@ const getWatchHistory = asyncHandler(async (req, res) => {
 
     return res
         .status(200)
-        .json(new ApiResponse(200, user[0]?.watchHistory || [], "Watch history fetched successfully")) 
+        .json(new ApiResponse(200, user[0]?.watchHistory || [], "Watch history fetched successfully"))
 })
 
 
