@@ -1,9 +1,8 @@
-import mongoose from "mongoose"
+import mongoose, { isValidObjectId } from "mongoose"
 import { Comment } from "../models/comment.model.js"
 import { ApiError } from "../utils/ApiError.js"
 import { ApiResponse } from "../utils/ApiResponse.js"
 import { asyncHandler } from "../utils/asyncHandler.js"
-import mongoose, { isValidObjectId } from "mongoose"
 
 
 const getVideoComments = asyncHandler(async (req, res) => {
@@ -27,7 +26,7 @@ const getVideoComments = asyncHandler(async (req, res) => {
                 foreignField: "_id",
                 as: "owner",
                 pipeline: [
-                    { $project: { username: 1, fullName: 1, avatar: 1 } }
+                    { $project: { username: 1, fullname: 1, avatar: 1 } }
                 ]
             }
         },
