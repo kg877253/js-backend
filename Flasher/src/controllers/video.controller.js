@@ -119,6 +119,7 @@ const getVideoById = asyncHandler(async (req, res) => {
         .json(new ApiResponse(200, populatedVideo, "Video fetched successfully"))
 })
 
+
 const updateVideo = asyncHandler(async (req, res) => {
     const { videoId } = req.params
     const { title, description } = req.body
@@ -177,10 +178,48 @@ const updateVideo = asyncHandler(async (req, res) => {
 const deleteVideo = asyncHandler(async (req, res) => {
     const { videoId } = req.params
     //TODO: delete video
+    if(!isValidObjectId(videoId)){
+        throw new ApiError(400, "Invalid videoId")
+    }
+
+    const video = await Video.findById(videoId)
+    if(!video){
+        throw new ApiError(404, "Video not found")
+    }
+
+    if(video.owner.toString() !== req.user._id.toString()){
+        throw new ApiError(403, "You are not allowed to delete this video")
+    }
+
+    // Delete the video
+    await Video.findByIdAndDelete(videoId)
+
+    return res
+        .status(200)
+        .json(new ApiResponse(200, {}, "Video deleted successfully"))
 })
 
 const togglePublishStatus = asyncHandler(async (req, res) => {
     const { videoId } = req.params
+    if(!isValidObjectId(videoId)){
+        throw new ApiError(400, "Invalid videoId")
+    }
+
+    const video = await Video.findById(videoId)
+    if(!video){
+        throw new ApiError(404, "Video not found")
+    }
+
+    if(video.owner.toString() !== req.user._id.toString()){
+        throw new ApiError(403, "You are not allowed to toggle publish status of this video")
+    }
+
+    video.isPublished = !video.isPublished
+    await video.save()
+
+    return res
+        .status(200)
+        .json(new ApiResponse(200, video, "Publish status toggled successfully"))
 })
 
 export {
