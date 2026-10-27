@@ -9,7 +9,9 @@ import { uploadToCloudinary } from "../utils/cloudinary.js"
 
 const getAllVideos = asyncHandler(async (req, res) => {
     const { page = 1, limit = 10, query, sortBy, sortType, userId } = req.query
+
     //Motive:  get all videos based on query, sort, pagination 
+
     //1. Sabse pehle published videos ko filter karna hai true or not
     //2. agar query hai to title aur description me search karna hai
     //3. agar userId hai to us user ke videos ko filter karna hai
@@ -17,6 +19,7 @@ const getAllVideos = asyncHandler(async (req, res) => {
     //5. TODO: pagination ke basis pe limit aur skip karna hai
 
     const filter = { isPublished: true }
+
     if (query?.trim()) {
         filter.$or = [ //match either title or description with the query
             //regex- searching for a matching text pattern(i-case insensitive(React=react))
@@ -24,6 +27,7 @@ const getAllVideos = asyncHandler(async (req, res) => {
             { description: { $regex: query, $options: "i" } }
         ]
     }
+    
     if (userId) {
         if (!isValidObjectId(userId)) {
             throw new ApiError(400, "Invalid userId")
