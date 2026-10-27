@@ -177,7 +177,7 @@ const updateVideo = asyncHandler(async (req, res) => {
 
 const deleteVideo = asyncHandler(async (req, res) => {
     const { videoId } = req.params
-    //TODO: delete video
+    
     if(!isValidObjectId(videoId)){
         throw new ApiError(400, "Invalid videoId")
     }
@@ -190,9 +190,16 @@ const deleteVideo = asyncHandler(async (req, res) => {
     if(video.owner.toString() !== req.user._id.toString()){
         throw new ApiError(403, "You are not allowed to delete this video")
     }
-
+    const oldThumbnail = video.thumbnail
+    const oldVideoFile = video.videoFile
     // Delete the video
     await Video.findByIdAndDelete(videoId)
+
+    // Delete the thumbnail and video file from Cloudinary
+    await deleteFromCloudinary(oldThumbnail, "image")
+    await deleteFromCloudinary(oldVideoFile, "video")
+
+    //TODO: delete likes, comments, watch history, etc. related to this video
 
     return res
         .status(200)
