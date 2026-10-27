@@ -4,7 +4,7 @@ import { User } from "../models/user.model.js"
 import { ApiError } from "../utils/ApiError.js"
 import { ApiResponse } from "../utils/ApiResponse.js"
 import { asyncHandler } from "../utils/asyncHandler.js"
-import { uploadToCloudinary } from "../utils/cloudinary.js"
+import { uploadToCloudinary, deleteFromCloudinary } from "../utils/cloudinary.js"
 
 
 const getAllVideos = asyncHandler(async (req, res) => {
@@ -51,7 +51,7 @@ const publishAVideo = asyncHandler(async (req, res) => {
     if (!title?.trim() || !description?.trim()) {
         throw new ApiError(400, "Title and description are required")
     }
-    
+
     // TODO: get video, upload to cloudinary, create video
     //Steps :
     //1. Get the video file and thumbnail from req.files
@@ -119,12 +119,60 @@ const getVideoById = asyncHandler(async (req, res) => {
         .json(new ApiResponse(200, populatedVideo, "Video fetched successfully"))
 })
 
-
 const updateVideo = asyncHandler(async (req, res) => {
     const { videoId } = req.params
-    //TODO: update video details like title, description, thumbnail
+    const { title, description } = req.body
+    const thumbnailLocalPath = req.file?.path
 
+    if (!isValidObjectId(videoId)) {
+        throw new ApiError(400, "Invalid videoId")
+    }
+
+    // kuch to update karne ko bhejo
+    if (!title?.trim() && !description?.trim() && !thumbnailLocalPath) {
+        throw new ApiError(400, "Provide at least one field to update")
+    }
+
+    const video = await Video.findById(videoId)
+    if (!video) {
+        throw new ApiError(404, "Video not found")
+    }
+
+    // sirf owner update kar sakta hai
+    if (video.owner.toString() !== req.user._id.toString()) {
+        throw new ApiError(403, "You are not allowed to update this video")
+    }
+
+    // text fields: sirf wahi badlo jo aaye
+    if (title?.trim()) video.title = title.trim()
+    if (description?.trim()) video.description = description.trim()
+
+    // thumbnail: naya aaya to hi upload + purana delete
+    const oldThumbnail = video.thumbnail
+    let thumbnailChanged = false
+
+    if (thumbnailLocalPath) {
+        const newThumbnail = await uploadToCloudinary(thumbnailLocalPath)
+        if (!newThumbnail) {
+            throw new ApiError(500, "Failed to upload new thumbnail")
+        }
+        video.thumbnail = newThumbnail.url
+        thumbnailChanged = true
+    }
+
+    // pehle DB me save
+    await video.save()
+
+    // save ke baad purana delete (order important hai)
+    if (thumbnailChanged) {
+        await deleteFromCloudinary(oldThumbnail, "image")
+    }
+
+    return res
+        .status(200)
+        .json(new ApiResponse(200, video, "Video updated successfully"))
 })
+
 
 const deleteVideo = asyncHandler(async (req, res) => {
     const { videoId } = req.params
