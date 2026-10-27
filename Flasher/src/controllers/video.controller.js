@@ -27,7 +27,7 @@ const getAllVideos = asyncHandler(async (req, res) => {
             { description: { $regex: query, $options: "i" } }
         ]
     }
-    
+
     if (userId) {
         if (!isValidObjectId(userId)) {
             throw new ApiError(400, "Invalid userId")
@@ -48,10 +48,10 @@ const getAllVideos = asyncHandler(async (req, res) => {
 
 const publishAVideo = asyncHandler(async (req, res) => {
     const { title, description } = req.body
-
     if (!title?.trim() || !description?.trim()) {
         throw new ApiError(400, "Title and description are required")
     }
+    
     // TODO: get video, upload to cloudinary, create video
     //Steps :
     //1. Get the video file and thumbnail from req.files
