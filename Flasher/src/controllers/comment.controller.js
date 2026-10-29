@@ -1,5 +1,6 @@
 import mongoose, { isValidObjectId } from "mongoose"
 import { Comment } from "../models/comment.model.js"
+import { Video } from "../models/video.model.js"
 import { ApiError } from "../utils/ApiError.js"
 import { ApiResponse } from "../utils/ApiResponse.js"
 import { asyncHandler } from "../utils/asyncHandler.js"
@@ -46,7 +47,7 @@ const getVideoComments = asyncHandler(async (req, res) => {
 })
 
 const addComment = asyncHandler(async (req, res) => {
-    
+
     //1. get the user id from the request object (req.user._id)
     // 2. get the video id from the request params
     // 3. get the comment text from the request body
@@ -60,13 +61,13 @@ const addComment = asyncHandler(async (req, res) => {
     if (!isValidObjectId(videoId)) {
         throw new ApiError(400, "Invalid video id")
     }
-    
+
     const videoExists = await Video.findById(videoId)
 
     if (!videoExists) {
         throw new ApiError(404, "Video not found")
     }
-    if (content?.trim() === "") {
+    if (!content?.trim()) {
         throw new ApiError(400, "Comment content is required")
     }
 
@@ -97,21 +98,20 @@ const updateComment = asyncHandler(async (req, res) => {
     if (!isValidObjectId(commentId)) {
         throw new ApiError(400, "Invalid comment id")
     }
-    if (content?.trim() === "") {
+    if (!content?.trim()) {
         throw new ApiError(400, "Comment content is required")
     }
-
     const comment = await Comment.findById(commentId)
     if (!comment) {
         throw new ApiError(404, "Comment not found")
     }
 
-    if(userId.toString() !== comment.owner.toString()) {
+    if (userId.toString() !== comment.owner.toString()) {
         throw new ApiError(403, "You are not authorized to update this comment")
     }
 
-    const updatedComment = await Comment.findByIdAndUpdate(commentId, 
-        { content: content }, 
+    const updatedComment = await Comment.findByIdAndUpdate(commentId,
+        { content: content },
         { returnDocument: "after" }
     )
 
@@ -139,7 +139,7 @@ const deleteComment = asyncHandler(async (req, res) => {
         throw new ApiError(404, "Comment not found")
     }
 
-    if(userId.toString() !== comment.owner.toString()) {
+    if (userId.toString() !== comment.owner.toString()) {
         throw new ApiError(403, "You are not authorized to delete this comment")
     }
 
