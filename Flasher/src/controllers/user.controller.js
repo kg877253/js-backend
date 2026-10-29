@@ -4,7 +4,6 @@ import { User } from "../models/user.model.js"
 import { uploadToCloudinary, deleteFromCloudinary } from "../utils/cloudinary.js"
 import { ApiResponse } from "../utils/ApiResponse.js"
 import jwt from 'jsonwebtoken';
-import { getPublicIdFromUrl } from '../utils/getpublicId.js';
 import mongoose from 'mongoose';
 
 const generateAccessandRefreshToken = async (userId) => {
@@ -118,7 +117,7 @@ const loginUser = asyncHandler(async (req, res) => {
     }
 
     //Step2
-    const existUser = await User.findOne({ $or: [{ email }, { username: username.toLowerCase() }] })
+    const existUser = await User.findOne({ $or: [{ email }, { username: username?.toLowerCase() }] })
     if (!existUser) { //if user doesn't exist(Step3)
         throw new ApiError(404, "User doesn't exists please register first")
     }
@@ -186,53 +185,50 @@ const logoutUser = asyncHandler(async (req, res) => {
 
 const refreshAccessToken = asyncHandler(async (req, res) => {
     //1. Get refresh token from cookies or request body
-    //2. Verify the refresh token using jwt.verify()
-    //3. If valid, generate new access and refresh tokens
-    //4. Update the user's refresh token in the database
-    //5. Send the new tokens in cookies and response
+    //2. Verify it with jwt.verify() (fail ho to 401)
+    //3. User dhundo aur DB wale token se match karo
+    //4. Naye access + refresh token banao (DB me bhi save hota hai)
+    //5. Cookies aur response me bhejo
 
-    const incomingrefreshToken = req.cookies.refreshToken || req.body.refreshToken;
-    if (!incomingrefreshToken) {
-        throw new ApiError(401, "unauthorized request")
+    const incomingRefreshToken = req.cookies?.refreshToken || req.body?.refreshToken
+    if (!incomingRefreshToken) {
+        throw new ApiError(401, "Unauthorized request")
     }
 
+    // try/catch sirf jwt.verify ke liye (invalid/expired token => 401)
+    let decodedToken
     try {
-        const decodedToken = jwt.verify(incomingrefreshToken, process.env.REFRESH_TOKEN_SECRET)
-        const user = await User.findById(decodedToken._id)
-        if (!user) {
-            throw new ApiError(401, "Invalid user for refresh token")
-        }
-
-        if (user.refreshToken !== incomingrefreshToken) {
-            throw new ApiError(401, "Invalid refresh token")
-        }
-
-        const { accessToken, newrefreshToken } = await generateAccessandRefreshToken(user._id);
-
-        const options = {
-            httpOnly: true,
-            secure: true,
-        }
-
-        return res
-            .status(200)
-            .cookie("accessToken", accessToken, options)
-            .cookie("refreshToken", newrefreshToken, options)
-            .json(new ApiResponse(200,
-                {
-                    accessToken,
-                    refreshToken: newrefreshToken
-                },
-                "Access token refreshed successfully")
-            )
-
-
+        decodedToken = jwt.verify(incomingRefreshToken, process.env.REFRESH_TOKEN_SECRET)
     } catch (error) {
-        console.error("Error test to kbnow", error);
-        throw new ApiError(500, "Error while refreshing access token that")
-        
+        throw new ApiError(401, "Invalid or expired refresh token")
     }
 
+    const user = await User.findById(decodedToken._id)
+    if (!user) {
+        throw new ApiError(401, "Invalid refresh token")
+    }
+
+    // purana/reuse hua token yahan pakda jayega
+    if (user.refreshToken !== incomingRefreshToken) {
+        throw new ApiError(401, "Refresh token is expired or already used")
+    }
+
+    // naam wahi jo generateAccessandRefreshToken return karta hai
+    const { accessToken, refreshToken } = await generateAccessandRefreshToken(user._id)
+
+    const options = {
+        httpOnly: true,
+        secure: true,
+    }
+
+    return res
+        .status(200)
+        .cookie("accessToken", accessToken, options)
+        .cookie("refreshToken", refreshToken, options)
+        .json(new ApiResponse(200,
+            { accessToken, refreshToken },
+            "Access token refreshed successfully"
+        ))
 })
 
 
@@ -303,14 +299,7 @@ const updateuseravatar = asyncHandler(async (req, res) => {
     await user.save();
 
     if (oldAvatarUrl) {
-        const oldPublicId = getPublicIdFromUrl(oldAvatarUrl);
-        if (oldPublicId) {
-            try {
-                await cloudinary.uploader.destroy(oldPublicId);
-            } catch (error) {
-                console.error("Old avatar deletion failed:", error);
-            }
-        }
+        deleteFromCloudinary(oldAvatarUrl,"image");
     }
 
     const updatedUser = await User.findById(user._id)
@@ -335,7 +324,7 @@ const updateusercoverimage = asyncHandler(async (req, res) => {
     }
 
     const user = await User.findByIdAndUpdate(req.user?._id,
-        { $set: { coverImage: coverImage.url } },
+        { $set: { coverImage: coverImage?.url } },
         { returnDocument: 'after' }
     ).select("-password -refreshToken");
 
@@ -400,7 +389,6 @@ const getUserChannelProfile = asyncHandler(async (req, res) => {
                 subscribersCount: 1,
                 subscribedToChannelsCount: 1,
                 isSubscribed: 1,
-                email: 1,
             }
         }
     ])
