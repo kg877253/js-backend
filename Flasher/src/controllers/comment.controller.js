@@ -47,6 +47,30 @@ const getVideoComments = asyncHandler(async (req, res) => {
 
 const addComment = asyncHandler(async (req, res) => {
     // TODO: add a comment to a video
+    //1. get the user id from the request object (req.user._id)
+    // 2. get the video id from the request params
+    // 3. get the comment text from the request body
+    // 4. create a new comment document in the database
+    // 5. return the newly created comment in the response
+
+    const userId = req.user._id
+    const { videoId } = req.params
+    const { commentcontent } = req.body
+
+    if (!isValidObjectId(videoId)) {
+        throw new ApiError(400, "Invalid video id")
+    }
+
+    const newComment = await Comment.create({
+        content: commentcontent,
+        owner: userId,
+        video: videoId
+    })
+
+    return res
+        .status(201)
+        .json(new ApiResponse(201, newComment, "Comment added successfully"))
+
 })
 
 const updateComment = asyncHandler(async (req, res) => {
