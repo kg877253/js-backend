@@ -1,7 +1,7 @@
 import { asyncHandler } from '../utils/asyncHandler.js';
 import { ApiError } from "../utils/ApiError.js"
 import { User } from "../models/user.model.js"
-import { uploadToCloudinary } from "../utils/cloudinary.js"
+import { uploadToCloudinary, deleteFromCloudinary } from "../utils/cloudinary.js"
 import { ApiResponse } from "../utils/ApiResponse.js"
 import jwt from 'jsonwebtoken';
 import { getPublicIdFromUrl } from '../utils/getpublicId.js';
@@ -118,7 +118,7 @@ const loginUser = asyncHandler(async (req, res) => {
     }
 
     //Step2
-    const existUser = await User.findOne({ $or: [{ email }, { username }] })
+    const existUser = await User.findOne({ $or: [{ email }, { username: username.toLowerCase() }] })
     if (!existUser) { //if user doesn't exist(Step3)
         throw new ApiError(404, "User doesn't exists please register first")
     }

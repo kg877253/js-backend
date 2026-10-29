@@ -6,7 +6,7 @@ import { asyncHandler } from "../utils/asyncHandler.js"
 
 
 const createTweet = asyncHandler(async (req, res) => {
-    
+
     const { content } = req.body
     const owner = req.user._id
 
@@ -32,7 +32,7 @@ const createTweet = asyncHandler(async (req, res) => {
 })
 
 const getUserTweets = asyncHandler(async (req, res) => {
-    
+
     const { userId } = req.params
 
     if (!isValidObjectId(userId)) {
@@ -67,12 +67,12 @@ const updateTweet = asyncHandler(async (req, res) => {
 
     const tweet = await Tweet.findById(tweetId)
 
-    if(tweet.owner.toString() !== req.user._id.toString()) {
-        throw new ApiError(403, "You are not authorized to update this tweet")
-    }
-
     if (!tweet) {
         throw new ApiError(404, "Tweet not found")
+    }
+
+    if (tweet.owner.toString() !== req.user._id.toString()) {
+        throw new ApiError(403, "You are not authorized to update this tweet")
     }
 
     tweet.content = content
@@ -98,7 +98,7 @@ const deleteTweet = asyncHandler(async (req, res) => {
         throw new ApiError(404, "Tweet not found")
     }
 
-    if(tweet.owner.toString() !== req.user._id.toString()) {
+    if (tweet.owner.toString() !== req.user._id.toString()) {
         throw new ApiError(403, "You are not authorized to delete this tweet")
     }
 
