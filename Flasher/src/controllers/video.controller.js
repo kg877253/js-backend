@@ -65,7 +65,10 @@ const publishAVideo = asyncHandler(async (req, res) => {
     if (!videofile || !thumbnail) {
         throw new ApiError(400, "Video file and thumbnail are required")
     }
-
+    
+    if (!videofile.size || !thumbnail.size) {
+        throw new ApiError(400, "Uploaded file is empty");
+    }
     //Step-2
     const videoUpload = await uploadToCloudinary(videofile.path)
     const thumbnailUpload = await uploadToCloudinary(thumbnail.path)
@@ -177,17 +180,17 @@ const updateVideo = asyncHandler(async (req, res) => {
 
 const deleteVideo = asyncHandler(async (req, res) => {
     const { videoId } = req.params
-    
-    if(!isValidObjectId(videoId)){
+
+    if (!isValidObjectId(videoId)) {
         throw new ApiError(400, "Invalid videoId")
     }
 
     const video = await Video.findById(videoId)
-    if(!video){
+    if (!video) {
         throw new ApiError(404, "Video not found")
     }
 
-    if(video.owner.toString() !== req.user._id.toString()){
+    if (video.owner.toString() !== req.user._id.toString()) {
         throw new ApiError(403, "You are not allowed to delete this video")
     }
     const oldThumbnail = video.thumbnail
@@ -208,16 +211,16 @@ const deleteVideo = asyncHandler(async (req, res) => {
 
 const togglePublishStatus = asyncHandler(async (req, res) => {
     const { videoId } = req.params
-    if(!isValidObjectId(videoId)){
+    if (!isValidObjectId(videoId)) {
         throw new ApiError(400, "Invalid videoId")
     }
 
     const video = await Video.findById(videoId)
-    if(!video){
+    if (!video) {
         throw new ApiError(404, "Video not found")
     }
 
-    if(video.owner.toString() !== req.user._id.toString()){
+    if (video.owner.toString() !== req.user._id.toString()) {
         throw new ApiError(403, "You are not allowed to toggle publish status of this video")
     }
 

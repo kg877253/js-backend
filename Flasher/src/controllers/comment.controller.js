@@ -60,7 +60,9 @@ const addComment = asyncHandler(async (req, res) => {
     if (!isValidObjectId(videoId)) {
         throw new ApiError(400, "Invalid video id")
     }
+    
     const videoExists = await Video.findById(videoId)
+
     if (!videoExists) {
         throw new ApiError(404, "Video not found")
     }
