@@ -43,7 +43,8 @@ const registerUser = asyncHandler(async (req, res) => {
     if ([fullname, username, email, password].some((field) => !field?.trim())) {
         throw new ApiError(400, "All fields are required");
     }
-    if (!email.includes("@") || !email.includes(".com")) {
+    const emailRegex = /^\S+@\S+\.\S+$/   // kuch@kuch.kuch format
+    if (!emailRegex.test(email)) {
         throw new ApiError(400, "Email is not valid")
     }
 
@@ -299,7 +300,7 @@ const updateuseravatar = asyncHandler(async (req, res) => {
     await user.save();
 
     if (oldAvatarUrl) {
-        deleteFromCloudinary(oldAvatarUrl,"image");
+        await deleteFromCloudinary(oldAvatarUrl, "image");
     }
 
     const updatedUser = await User.findById(user._id)
@@ -318,15 +319,21 @@ const updateusercoverimage = asyncHandler(async (req, res) => {
         throw new ApiError(400, "Cover image file is required");
     }
 
+    // purana URL pehle hi rakh lo (req.user me coverImage aati hai)
+    const oldCoverImage = req.user.coverImage
+
     const coverImage = await uploadToCloudinary(coverImageLocalPath)
-    if (!coverImage.url) {
+    if (!coverImage?.url) {
         throw new ApiError(500, "Error uploading cover image to cloudinary");
     }
 
     const user = await User.findByIdAndUpdate(req.user?._id,
-        { $set: { coverImage: coverImage?.url } },
+        { $set: { coverImage: coverImage.url } },
         { returnDocument: 'after' }
     ).select("-password -refreshToken");
+
+    // save ke baad purana delete (khaali "" ho to function khud chhod deta hai)
+    await deleteFromCloudinary(oldCoverImage, "image")
 
     return res
         .status(200)
