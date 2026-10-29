@@ -38,7 +38,6 @@ const registerUser = asyncHandler(async (req, res) => {
 
     //Step1
     const { fullname, username, email, password } = req.body;
-    console.log(email, fullname, username, password);
 
     //Step2
     //some ka use krke check kr rhe ki koi bhi field empty to nhi hai normal if else se bhi hoskta hai but ye short way hai
