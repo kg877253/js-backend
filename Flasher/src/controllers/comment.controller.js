@@ -60,7 +60,11 @@ const addComment = asyncHandler(async (req, res) => {
     if (!isValidObjectId(videoId)) {
         throw new ApiError(400, "Invalid video id")
     }
-    if (!content) {
+    const videoExists = await Video.findById(videoId)
+    if (!videoExists) {
+        throw new ApiError(404, "Video not found")
+    }
+    if (content?.trim() === "") {
         throw new ApiError(400, "Comment content is required")
     }
 
@@ -78,6 +82,40 @@ const addComment = asyncHandler(async (req, res) => {
 
 const updateComment = asyncHandler(async (req, res) => {
     // TODO: update a comment
+    //1. get the comment id from the request params
+    //2. Check if the comment exists and if the user is the owner of the comment
+    //3. get the comment text from the request body
+    //4. update the comment document in the database
+    //5. return the updated comment in the response
+
+    const { commentId } = req.params
+    const { content } = req.body
+    const userId = req.user._id
+
+    if (!isValidObjectId(commentId)) {
+        throw new ApiError(400, "Invalid comment id")
+    }
+    if (content?.trim() === "") {
+        throw new ApiError(400, "Comment content is required")
+    }
+
+    const comment = await Comment.findById(commentId)
+    if (!comment) {
+        throw new ApiError(404, "Comment not found")
+    }
+
+    if(userId.toString() !== comment.owner.toString()) {
+        throw new ApiError(403, "You are not authorized to update this comment")
+    }
+
+    const updatedComment = await Comment.findByIdAndUpdate(commentId, 
+        { content: content }, 
+        { returnDocument: "after" }
+    )
+
+    return res
+        .status(200)
+        .json(new ApiResponse(200, updatedComment, "Comment updated successfully"))
 })
 
 const deleteComment = asyncHandler(async (req, res) => {
