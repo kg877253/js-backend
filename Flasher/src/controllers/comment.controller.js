@@ -84,7 +84,7 @@ const addComment = asyncHandler(async (req, res) => {
 })
 
 const updateComment = asyncHandler(async (req, res) => {
-    // TODO: update a comment
+
     //1. get the comment id from the request params
     //2. Check if the comment exists and if the user is the owner of the comment
     //3. get the comment text from the request body
@@ -121,7 +121,7 @@ const updateComment = asyncHandler(async (req, res) => {
 })
 
 const deleteComment = asyncHandler(async (req, res) => {
-    // TODO: delete a comment
+
     //1. get the comment id from the request params
     //2. Check if the comment exists and if the user is the owner of the comment
     //3. delete the comment document from the database
